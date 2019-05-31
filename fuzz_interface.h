@@ -10,6 +10,8 @@
 #include <mach/vm_map.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <openssl/rand.h>
+#include <time.h>
 
 
 #define MAX_TYPES 256
@@ -40,11 +42,17 @@ struct complex_mach_msg_ool_s {
   //mach_msg_type_number_t count;
 };
 
+typedef struct driver_s driver_t;
+struct driver_s {
+  char *name;
+  int requires_root;
+};
+
 mach_port_t get_user_client(char *name, uint32_t type);
 valid_types_ptr find_connection_types(char *name);
 int IOCCM_fuzz_selectors(io_connect_t io_connection);
 kern_return_t get_service_from_bootstrap(char *service_name, mach_port_t *mach_port);
-
+void fill_buffer(char *buf, size_t s);
 
 
 extern kern_return_t bootstrap_look_up(mach_port_t bootstrap_port, char* service_name, mach_port_t* service_port);

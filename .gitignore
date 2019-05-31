@@ -5,3 +5,18 @@ AGDPClientControl_Crash.c
 fuzz_test
 poc.c
 poc2.c
+last_driver.txt
+*.buf
+untitled folder/agdpc.trigger
+untitled folder/bug_report.txt
+.DS_Store
+untitled folder/CFPerfsd_xpc
+untitled folder/CFPerfsd_xpc.c
+untitled folder/crash_ioaccel
+untitled folder/crash_ioaccel.c
+untitled folder/intelfbclientcontrol
+untitled folder/geod.c
+untitled folder/IntelFBClientControl.trigger
+untitled folder/macos_bug_track.txt
+mach_test
+xpc_fuzz

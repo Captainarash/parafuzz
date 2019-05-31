@@ -109,30 +109,79 @@ valid_types_ptr find_connection_types(char *name)
 
 int IOCCM_fuzz_selectors(io_connect_t io_connection) {
   //testing with random selectors
-  uint64_t input[3];
-  uint64_t inputCnt = 3;
-  memset(input,0x01,3);
+  uint64_t input[16];
+  uint64_t inputCnt;
+  fill_buffer((char *)&inputCnt, sizeof(inputCnt));
+  inputCnt = inputCnt % 16;//+ 1;
+  fill_buffer((char *)input, 16*8);
 
-  char inputStruct[100];
-  memset(inputStruct,0x32,100);
-  size_t inputStructCnt = -1;
+  char inputStruct[1024];
+  fill_buffer(inputStruct, 1024);
+  size_t inputStructCnt;
+  fill_buffer((char *)&inputStructCnt, sizeof(inputStructCnt));
+  inputStructCnt = inputStructCnt % 16;// + 1;
   //memset(inputStruct, 0x4, 16);
   //*(uint64_t*)inputStruct = 0x41414141;
   //*(uint64_t*)inputStruct = 0x0;
 
-  uint64_t output[8];
-  uint32_t outputCnt = 6587687;
-  char outputStruct[8];
-  memset(output,0xFF,8);
-  size_t outputStructCnt = -1;
+  uint64_t output[1024];
+  uint32_t outputCnt;
+  fill_buffer((char *)&outputCnt, sizeof(outputCnt));
+  outputCnt = outputCnt % 16 + 1;
+  char outputStruct[1024];
+  memset(output,0xFF,1024);
+  size_t outputStructCnt;
+  fill_buffer((char *)&outputStructCnt, sizeof(outputStructCnt));
+  outputStructCnt = outputStructCnt % 16 + 1;
+
+  int fd = open("/Users/arash/Documents/Github/parafuzz/trigger.buf", O_CREAT | O_WRONLY | O_EXLOCK);
+  printf("fd=%d\n",fd);
+  fsync(fd);
+  fsync(fd);
+  write(fd, input, 16*8);
+  write(fd, &inputCnt, 8);
+  write(fd, inputStruct, 1024);
+  write(fd, &inputStructCnt, 8);
+  write(fd, output, 1024*8);
+  write(fd, &outputCnt, 4);
+  write(fd, outputStruct, 1024);
+  write(fd, &outputStructCnt, 8);
+  fsync(fd);
+  fsync(fd);
+  close(fd);
+  sync();
+  //sleep(1);
+
+  //getchar();
+
+  // for (size_t i = 0; i < 1024; i++) {
+  //   printf("0x%02x ", inputStruct[i]);
+  // }
+  //
+  // printf("\n\n");
+  //
+  // for (size_t i = 0; i < 16; i++) {
+  //   printf("0x%016x ", input[i]);
+  // }
+  // printf("\n\n");
+  //
+  // printf("0x%016x ", inputCnt);
+  // printf("0x%016x\n", inputStructCnt);
+  //
+  // printf("\n\n");
 
    for (uint32_t selector = 0; selector < 0x2000; selector++) {
+      //printf("%zu\n", selector);
+      //usleep(1000);
+     // 3 4
     //printf("Selector: %u\n", selector);
     //sleep(1);
     // //sleep(0.2);
     // FILE *logfile = fopen("logfile.txt","a");
     // fprintf (logfile, "selector: %u\n",selector);
     // fclose(logfile);
+    // memset(output, 0, sizeof(output));
+    // memset(outputStruct, 0, sizeof(outputStruct));
     if (io_connection == IO_OBJECT_NULL)
     {
       printf("io_connect_t object died :/\n");
@@ -151,9 +200,6 @@ int IOCCM_fuzz_selectors(io_connect_t io_connection) {
       outputStruct,
       &outputStructCnt
     );
-    //printf("output: 0x%x\n",*(uint64_t*)output);
-    //char *deref = *(uint64_t*)output;
-    //printf("output: 0x%x\n",*deref);
   }
 
   return 0;
@@ -192,4 +238,24 @@ kern_return_t get_service_from_bootstrap(char *service_name, mach_port_t *mach_p
     return err;
   }
   return err;
+}
+
+
+
+void fill_buffer(char *buf, size_t s){
+  int choice = rand() % 5;
+  int r;
+  if (buf == 0) {
+    return;
+  }
+  if(choice == 0){
+    for (size_t i = 0; i < s; i++) {
+      r = rand();
+      buf[i] = r >> 24;
+    }
+  }
+  else {
+    memset(buf, (char)(rand() >> 24), s);
+  }
+  return;
 }

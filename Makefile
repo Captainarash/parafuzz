@@ -1,9 +1,11 @@
-\CC=gcc
-CFLAGS=-framework QuartzCore -framework IOKit -framework ApplicationServices -I .
+CC=gcc
+CFLAGS=-O0 -framework QuartzCore -framework IOKit -framework ApplicationServices -I .
+LDFLAGS=-L/usr/local/opt/openssl/lib
+CPPFLAGS=-I/usr/local/opt/openssl/include
 
 all: test.c mach_test.c fuzz_interface.c
-	$(CC) -o mach_test mach_test.c fuzz_interface.c $(CFLAGS)
-	$(CC) -o fuzz_test test.c fuzz_interface.c $(CFLAGS)
+	$(CC) -o mach_test mach_test.c fuzz_interface.c $(CFLAGS) -lcrypto -lssl $(LDFLAGS) $(CPPFLAGS)
+	$(CC) -o fuzz_test test.c fuzz_interface.c $(CFLAGS) -lcrypto -lssl $(LDFLAGS) $(CPPFLAGS)
 
 mach_test: mach_test.c fuzz_interface.c
 	$(CC) -o mach_test mach_test.c fuzz_interface.c $(CFLAGS)
