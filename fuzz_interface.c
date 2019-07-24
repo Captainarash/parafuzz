@@ -1,5 +1,13 @@
 #include "fuzz_interface.h"
-//
+
+
+char *head = "GET /";
+char *host = "192.168.86.188";
+char port_str[8];
+char type_str[8];
+char selector_str[8];
+
+static __attribute__((used)) int var1 = 54;
 /******************************************************************************
 * function: get_user_client()
 *           It tries to create a connection to the user client of a matching
@@ -111,45 +119,41 @@ int IOCCM_fuzz_selectors(io_connect_t io_connection) {
   //testing with random selectors
   uint64_t input[16];
   uint64_t inputCnt;
+  size_t outputStructCnt;
+  char outputStruct[1024];
+  uint64_t output[1024];
+  uint32_t outputCnt;
+  char inputStruct[1024];
+  size_t inputStructCnt;
+
+  fill_buffer((char *)&inputStructCnt, sizeof(inputStructCnt));
+  inputStructCnt = inputStructCnt % 16;// + 1;
+  fill_buffer((char *)&outputCnt, sizeof(outputCnt));
+  outputCnt = outputCnt % 16 + 1;
+  memset(output,0xFF,1024);
+  fill_buffer(inputStruct, 1024);
   fill_buffer((char *)&inputCnt, sizeof(inputCnt));
   inputCnt = inputCnt % 16;//+ 1;
   fill_buffer((char *)input, 16*8);
-
-  char inputStruct[1024];
-  fill_buffer(inputStruct, 1024);
-  size_t inputStructCnt;
-  fill_buffer((char *)&inputStructCnt, sizeof(inputStructCnt));
-  inputStructCnt = inputStructCnt % 16;// + 1;
-  //memset(inputStruct, 0x4, 16);
-  //*(uint64_t*)inputStruct = 0x41414141;
-  //*(uint64_t*)inputStruct = 0x0;
-
-  uint64_t output[1024];
-  uint32_t outputCnt;
-  fill_buffer((char *)&outputCnt, sizeof(outputCnt));
-  outputCnt = outputCnt % 16 + 1;
-  char outputStruct[1024];
-  memset(output,0xFF,1024);
-  size_t outputStructCnt;
   fill_buffer((char *)&outputStructCnt, sizeof(outputStructCnt));
   outputStructCnt = outputStructCnt % 16 + 1;
 
-  int fd = open("/Users/arash/Documents/Github/parafuzz/trigger.buf", O_CREAT | O_WRONLY | O_EXLOCK);
-  printf("fd=%d\n",fd);
-  fsync(fd);
-  fsync(fd);
-  write(fd, input, 16*8);
-  write(fd, &inputCnt, 8);
-  write(fd, inputStruct, 1024);
-  write(fd, &inputStructCnt, 8);
-  write(fd, output, 1024*8);
-  write(fd, &outputCnt, 4);
-  write(fd, outputStruct, 1024);
-  write(fd, &outputStructCnt, 8);
-  fsync(fd);
-  fsync(fd);
-  close(fd);
-  sync();
+  // int fd = open("/Users/arash/Documents/Github/parafuzz/trigger.buf", O_CREAT | O_WRONLY | O_EXLOCK);
+  // printf("fd=%d\n",fd);
+  // fsync(fd);
+  // fsync(fd);
+  // write(fd, input, 16*8);
+  // write(fd, &inputCnt, 8);
+  // write(fd, inputStruct, 1024);
+  // write(fd, &inputStructCnt, 8);
+  // write(fd, output, 1024*8);
+  // write(fd, &outputCnt, 4);
+  // write(fd, outputStruct, 1024);
+  // write(fd, &outputStructCnt, 8);
+  // fsync(fd);
+  // fsync(fd);
+  // close(fd);
+  // sync();
   //sleep(1);
 
   //getchar();
@@ -170,18 +174,15 @@ int IOCCM_fuzz_selectors(io_connect_t io_connection) {
   //
   // printf("\n\n");
 
-   for (uint32_t selector = 0; selector < 0x2000; selector++) {
-      //printf("%zu\n", selector);
-      //usleep(1000);
-     // 3 4
-    //printf("Selector: %u\n", selector);
-    //sleep(1);
-    // //sleep(0.2);
-    // FILE *logfile = fopen("logfile.txt","a");
-    // fprintf (logfile, "selector: %u\n",selector);
-    // fclose(logfile);
-    // memset(output, 0, sizeof(output));
-    // memset(outputStruct, 0, sizeof(outputStruct));
+   for (uint32_t selector = 3; selector < 5; selector++) {
+    printf("%u\n", selector);
+    // int fd = open("select_ioaccel.txt", O_CREAT | O_WRONLY | O_EXLOCK);
+    // printf("fd = %d\n", fd);
+    // write(fd, &selector, sizeof(selector));
+    // fsync(fd);
+    // close(fd);
+    // sync();
+    //record_call_id(5, selector);
     if (io_connection == IO_OBJECT_NULL)
     {
       printf("io_connect_t object died :/\n");
@@ -200,6 +201,8 @@ int IOCCM_fuzz_selectors(io_connect_t io_connection) {
       outputStruct,
       &outputStructCnt
     );
+    // remove("select_ioaccel.txt");
+    // sync();
   }
 
   return 0;
@@ -248,14 +251,123 @@ void fill_buffer(char *buf, size_t s){
   if (buf == 0) {
     return;
   }
-  if(choice == 0){
+  if(choice != 0){
     for (size_t i = 0; i < s; i++) {
       r = rand();
       buf[i] = r >> 24;
     }
   }
   else {
-    memset(buf, (char)(rand() >> 24), s);
+    memset(buf, (char)(rand()>>24), s);
+  }
+
+  switch (choice) {
+    case 1:{
+      //we clamp the random values by a random roof
+      clamp_buf(buf,s);
+      break;
+    }
+    case 2:{
+      //we flip all the bits
+      flip_buf(buf,s);
+      break;
+    }
+    case 3:{
+      //we reverse the buffer
+      reverse_buf(buf,s);
+      break;
+    }
+    default:
+      //do nothing
+      break;
   }
   return;
+}
+
+void clamp_buf(char *buf, size_t s){
+  unsigned char roof = rand() >> 24;
+  for (size_t i = 0; i < s; i++) {
+    if (buf[i] > roof || buf[i] < 0 ) {
+      buf[i] = roof;
+    }
+  }
+  return;
+}
+
+void flip_buf(char *buf, size_t s){
+  for (size_t i = 0; i < s; i++) {
+    buf[i] = ~buf[i];
+  }
+  return;
+}
+
+void reverse_buf(char *buf, size_t s) {
+  char *new_buf = (char *)malloc(s);
+  if (!new_buf) {
+    return;
+  }
+  for (size_t i = 0; i < s; i++) {
+    new_buf[i] = buf[s-i-1];
+  }
+  for (size_t i = 0; i < s; i++) {
+    buf[i] = new_buf[i];
+  }
+  free(new_buf);
+  return;
+}
+
+void record_call_id(uint32_t type, uint32_t selector){
+  in_port_t port = 8000;
+	struct sockaddr_in addr;
+	int on = 1, sock;
+
+  memset(port_str, 0, 8);
+  memset(type_str, 0, 8);
+  memset(selector_str, 0, 8);
+
+  sprintf(type_str, "%u", type);
+  sprintf(selector_str, "%u", selector);
+  size_t req_len = 12 + strlen(type_str) + 1 + strlen(selector_str) + 2;
+
+
+
+  char *req = calloc(req_len, 1);
+  if (!req) {
+    printf("Failed to malloc in %s\n", __func__);
+    exit(1);
+  }
+
+  uint32_t offset = 0;
+  memcpy(req, head, strlen(head));
+  offset +=  strlen(head);
+  memcpy(req + offset, type_str, strlen(type_str));
+  offset += strlen(type_str);
+  req[offset] = '?';
+  offset++;
+  memcpy(req + offset, selector_str, strlen(selector_str));
+  offset += strlen(selector_str);
+  req[offset] = '\r';
+  req[++offset] = '\n';
+  req[++offset] = '\r';
+  req[++offset] = '\n';
+
+  inet_pton(AF_INET, host, &(addr.sin_addr));
+
+	addr.sin_port = htons(port);
+	addr.sin_family = AF_INET;
+	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char *)&on, sizeof(int));
+
+	if(sock == -1){
+		exit(1);
+	}
+
+	if(connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) == -1){
+		exit(1);
+	}
+  write(sock, req, strlen(req));
+	bzero(req, req_len);
+  close(sock);
+  free(req);
+	return;
 }

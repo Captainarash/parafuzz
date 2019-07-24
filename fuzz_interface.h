@@ -10,8 +10,13 @@
 #include <mach/vm_map.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#include <openssl/rand.h>
 #include <time.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 
 #define MAX_TYPES 256
@@ -53,7 +58,10 @@ valid_types_ptr find_connection_types(char *name);
 int IOCCM_fuzz_selectors(io_connect_t io_connection);
 kern_return_t get_service_from_bootstrap(char *service_name, mach_port_t *mach_port);
 void fill_buffer(char *buf, size_t s);
-
+void record_call_id(uint32_t type, uint32_t selector);
+void reverse_buf(char *buf, size_t s);
+void flip_buf(char *buf, size_t s);
+void clamp_buf(char *buf, size_t s);
 
 extern kern_return_t bootstrap_look_up(mach_port_t bootstrap_port, char* service_name, mach_port_t* service_port);
 

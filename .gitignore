@@ -20,3 +20,6 @@ untitled folder/IntelFBClientControl.trigger
 untitled folder/macos_bug_track.txt
 mach_test
 xpc_fuzz
+*.txt
+untitled folder/poc_ioaccel
+untitled folder/poc_ioaccel.c
