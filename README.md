@@ -4,13 +4,10 @@ parafuzz is a fuzzing tool for macos
 At the moment it can only fuzz iokit drivers in a limited way but has found many bugs so far.
 
 Published/Fixed bugs:
-CVE-2019-8629 (Intel Graphics Driver)
+CVE-2019-8629 (MacOS 10.14.5 - Intel Graphics Driver)
+CVE-2019-8693 (MacOS 10.14.6 - AppleGraphicsControl)
+CVE-2019-8691 (MacOS 10.14.6 - Graphics Drivers)
+CVE-2019-8694 (MacOS 10.14.6 - IOAcceleratorFamily)
 
 Reported Unpublished/Embargoed:
-1. 713751966 14th May (Own Mac - IntelFBClientControl)
-2. 713732793 14th May (Own Mac - AGDC)
-3. 714368863 28th May (Solita Mac - AMD)
-
-Not reported/awaiting analysis:
-
-IOAccelaratorFamily2 - Page Fault
+1. 717100843 24th July (MacOS - AppleGraphicsDevicePolicy)
